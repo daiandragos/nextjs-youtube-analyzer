@@ -4,6 +4,15 @@ export type Video = {
   description: string;
   snippet: {
     publishedAt: Date;
+    title: string;
+  };
+  contentDetails: {
+    videoId: string;
+  };
+  statistics: {
+    viewCount: string;
+    likeCount: string;
+    commentCount: string;
   };
 };
 

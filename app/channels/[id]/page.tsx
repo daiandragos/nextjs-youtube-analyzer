@@ -11,7 +11,6 @@ const DetailsPage = async ({ params }: { params: Promise<{ id: string }> }) => {
 
   try {
     details = await getChannelDetails(id);
-    console.log(details);
   } catch (error) {
     console.error("Error fetching channel details:", error);
   }

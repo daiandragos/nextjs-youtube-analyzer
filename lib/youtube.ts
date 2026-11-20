@@ -19,11 +19,8 @@ export async function getAllVideos(playlistId: string) {
 
   do {
     const url = `${process.env.YOUTUBE_API_URL}/playlistItems?part=snippet,contentDetails&playlistId=${playlistId}&maxResults=50&pageToken=${nextPageToken}&key=${process.env.YOUTUBE_API_KEY}`;
-    console.log("Fetching videos from URL:", url);
     const response = await fetch(url);
     const data = await response.json();
-
-    console.log("Fetched videos:", data);
 
     videos.push(...data.items);
 
@@ -34,7 +31,6 @@ export async function getAllVideos(playlistId: string) {
 }
 
 export function getOldestVideo(videos: Video[]) {
-  console.log(videos);
   let oldestVideo: Video | null = null;
   let oldestDate = new Date(Date.now());
   for (const video of videos) {
@@ -44,11 +40,9 @@ export function getOldestVideo(videos: Video[]) {
       oldestDate = datePublished;
     }
   }
-  console.log("Oldest video:", oldestVideo);
   return oldestVideo;
 }
 export function getNewestVideo(videos: Video[]) {
-  console.log(videos);
   let newestVideo: Video | null = null;
   let newestDate = new Date(2005, 11);
   for (const video of videos) {
@@ -58,6 +52,68 @@ export function getNewestVideo(videos: Video[]) {
       newestDate = datePublished;
     }
   }
-  console.log("Newest video:", newestVideo);
+
   return newestVideo;
+}
+
+// popular videos
+export async function getPopularVideos(videos: Video[]) {
+  let mostViewedVideo: Video | null = null;
+  let mostLikedVideo: Video | null = null;
+  let mostCommentedVideo: Video | null = null;
+  let mostPopularVideo: Video | null = null;
+  let highestViewCount = 0;
+  let highestLikeCount = 0;
+  let highestCommentCount = 0;
+  let highestPopularityScore = 0;
+
+  for (const video of videos) {
+    const videoId = video.contentDetails.videoId;
+    const apiKey = process.env.YOUTUBE_API_KEY!;
+
+    const url = new URL("https://www.googleapis.com/youtube/v3/videos");
+
+    url.searchParams.set("part", "snippet,statistics,contentDetails");
+    url.searchParams.set("id", videoId);
+    url.searchParams.set("key", apiKey);
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    const videoData = data.items?.[0];
+    const stats = videoData?.statistics;
+    if (parseInt(stats.viewCount) > highestViewCount) {
+      mostViewedVideo = videoData;
+      highestViewCount = stats.viewCount;
+      // console.log(highestViewCount, "highestViewCount");
+    }
+    if (parseInt(stats.likeCount) > highestLikeCount) {
+      mostLikedVideo = videoData;
+      highestLikeCount = stats.likeCount;
+      // console.log(highestLikeCount, "highestLikeCount");
+    }
+
+    if (parseInt(stats.commentCount) > highestCommentCount) {
+      mostCommentedVideo = videoData;
+      highestCommentCount = stats.commentCount;
+      // console.log(highestCommentCount, "highestcommentCount");
+    }
+
+    // calculate popularity score based on views, likes, and comments
+    const popularityScore =
+      ((stats.likeCount + stats.commentCount) / stats.viewCount) * 100;
+
+    if (popularityScore > highestPopularityScore) {
+      highestPopularityScore = popularityScore;
+      mostPopularVideo = videoData;
+      console.log(highestPopularityScore, "highestPopularityScore");
+    }
+  }
+
+  return {
+    mostViewedVideo,
+    mostLikedVideo,
+    mostCommentedVideo,
+    mostPopularVideo,
+  };
 }
